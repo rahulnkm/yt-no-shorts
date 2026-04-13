@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "YouTube No Shorts",
+  "version": "1.0.0",
+  "description": "Removes all Shorts from YouTube.",
+  "content_scripts": [
+    {
+      "matches": ["*://*.youtube.com/*"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ]
+}

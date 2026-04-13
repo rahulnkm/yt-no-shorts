@@ -1,0 +1,37 @@
+/* ---------- Legacy ytd-* shelves ---------- */
+ytd-rich-shelf-renderer[is-shorts],
+ytd-reel-shelf-renderer,
+ytd-reel-item-renderer,
+ytd-shorts,
+ytd-rich-section-renderer:has(ytd-rich-shelf-renderer[is-shorts]),
+
+/* ---------- New lit view-model shelves (2025+ migration) ---------- */
+grid-shelf-view-model,
+shorts-lockup-view-model,
+ytm-shorts-lockup-view-model,
+ytm-shorts-lockup-view-model-v2,
+
+/* ---------- Wrapping section containers on search/home ---------- */
+ytd-item-section-renderer:has(ytd-reel-shelf-renderer),
+ytd-item-section-renderer:has(grid-shelf-view-model),
+ytd-item-section-renderer:has(shorts-lockup-view-model),
+ytd-item-section-renderer:has(ytm-shorts-lockup-view-model-v2),
+ytd-shelf-renderer:has(ytd-reel-shelf-renderer),
+ytd-shelf-renderer:has(grid-shelf-view-model),
+
+/* ---------- Shorts items in feeds/search ---------- */
+ytd-video-renderer:has(a[href^="/shorts/"]),
+ytd-compact-video-renderer:has(a[href^="/shorts/"]),
+ytd-grid-video-renderer:has(a[href^="/shorts/"]),
+ytd-rich-item-renderer:has(a[href^="/shorts/"]),
+
+/* ---------- Sidebar / mini-guide Shorts tab ---------- */
+ytd-guide-entry-renderer:has(a[title="Shorts"]),
+ytd-mini-guide-entry-renderer[aria-label="Shorts"],
+ytd-guide-entry-renderer:has(a[href="/shorts"]),
+ytd-mini-guide-entry-renderer:has(a[href="/shorts"]),
+
+/* ---------- Notifications linking to shorts ---------- */
+ytd-notification-renderer:has(a[href*="/shorts/"]) {
+  display: none !important;
+}
