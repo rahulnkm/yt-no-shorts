@@ -46,9 +46,12 @@ if (!redirectShorts()) {
     "YTM-SHORTS-LOCKUP-VIEW-MODEL-V2",
   ]);
 
-  // Ancestors we climb to when we want to kill the whole shelf, not just an item
+  // Ancestors we climb to when we want to kill the whole shelf, not just an item.
+  // CRITICAL: do NOT include ytd-item-section-renderer — on search pages that is a
+  // MIXED container holding all results (regular videos + interleaved Shorts shelves).
+  // Hiding it nukes the entire search page. Only climb to scoped shelf wrappers.
   const SECTION_ANCESTORS =
-    "ytd-item-section-renderer, ytd-shelf-renderer, ytd-rich-section-renderer, ytd-rich-shelf-renderer, ytd-reel-shelf-renderer";
+    "ytd-shelf-renderer, ytd-rich-section-renderer, ytd-rich-shelf-renderer, ytd-reel-shelf-renderer";
 
   // Ancestors we climb to from a /shorts/ anchor to find the enclosing item
   const ITEM_ANCESTORS =
@@ -94,11 +97,12 @@ if (!redirectShorts()) {
       });
     });
 
-    // (d) Header text matcher: any shelf title that is exactly "Shorts"
-    //     (scoped to shelf-title elements, never video titles)
+    // (d) Header text matcher: any SHELF title that is exactly "Shorts"
+    //     (scoped to shelf-title elements only — never item-section-renderer,
+    //     which on search pages contains all results, not just shorts)
     root
       .querySelectorAll?.(
-        'ytd-shelf-renderer #title, ytd-item-section-renderer #title, grid-shelf-view-model h2, grid-shelf-view-model [role="heading"]'
+        'ytd-shelf-renderer #title, grid-shelf-view-model h2, grid-shelf-view-model [role="heading"]'
       )
       .forEach((titleEl) => {
         const txt = titleEl.textContent?.trim();

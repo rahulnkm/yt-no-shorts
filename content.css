@@ -11,13 +11,11 @@ shorts-lockup-view-model,
 ytm-shorts-lockup-view-model,
 ytm-shorts-lockup-view-model-v2,
 
-/* ---------- Wrapping section containers on search/home ---------- */
-ytd-item-section-renderer:has(ytd-reel-shelf-renderer),
-ytd-item-section-renderer:has(grid-shelf-view-model),
-ytd-item-section-renderer:has(shorts-lockup-view-model),
-ytd-item-section-renderer:has(ytm-shorts-lockup-view-model-v2),
+/* ---------- Shelf wrappers (scoped — never hide item-section-renderer, ---------- */
+/* ---------- that's a MIXED container on search pages) ---------- */
 ytd-shelf-renderer:has(ytd-reel-shelf-renderer),
 ytd-shelf-renderer:has(grid-shelf-view-model),
+ytd-shelf-renderer:has(shorts-lockup-view-model),
 
 /* ---------- Shorts items in feeds/search ---------- */
 ytd-video-renderer:has(a[href^="/shorts/"]),
