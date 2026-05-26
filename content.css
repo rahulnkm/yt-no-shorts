@@ -49,6 +49,38 @@ html {
 }
 
 /* ============================================================
+   Top bar (masthead) — hidden by default, slides in on top-hover.
+   Also strips microphone, notifications, and Create button.
+   ============================================================ */
+
+ytd-masthead {
+  transform: translateY(-100%) !important;
+  transition: transform 0.22s ease !important;
+}
+
+html.psych-top-visible ytd-masthead {
+  transform: translateY(0) !important;
+}
+
+/* Microphone (voice search) */
+ytd-masthead #voice-search-button,
+ytd-masthead yt-icon-button#voice-search-button {
+  display: none !important;
+}
+
+/* Notifications bell */
+ytd-masthead ytd-notification-topbar-button-renderer {
+  display: none !important;
+}
+
+/* Create button (camera/plus) — multiple selector variants for resilience */
+ytd-masthead button[aria-label="Create"],
+ytd-masthead ytd-topbar-menu-button-renderer:has(button[aria-label="Create"]),
+ytd-masthead ytd-button-renderer:has(button[aria-label="Create"]) {
+  display: none !important;
+}
+
+/* ============================================================
    Watch page: full-bleed player + custom monospace overlay
    Works in BOTH default mode (player in #primary) and
    theater mode (player in #full-bleed-container).
@@ -61,10 +93,10 @@ ytd-watch-flexy:not([theater]) #full-bleed-container { display: none !important;
 ytd-watch-flexy:not([theater]) #primary {
   width: 100% !important;
   max-width: 100% !important;
-  height: calc(100vh - 56px) !important;
+  height: 100vh !important;
+  margin-top: -56px !important;
   position: relative !important;
   padding: 0 !important;
-  margin: 0 !important;
 }
 ytd-watch-flexy:not([theater]) #primary-inner {
   height: 100% !important;
@@ -75,8 +107,9 @@ ytd-watch-flexy:not([theater]) #primary-inner {
 /* --- Theater mode: player lives in #full-bleed-container --- */
 ytd-watch-flexy[theater] #full-bleed-container {
   display: block !important;
-  height: calc(100vh - 56px) !important;
-  max-height: calc(100vh - 56px) !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+  margin-top: -56px !important;
   position: relative !important;
 }
 ytd-watch-flexy[theater] #columns,
@@ -90,8 +123,13 @@ ytd-watch-flexy #player-container-outer,
 ytd-watch-flexy #player-container,
 ytd-watch-flexy #player-full-bleed-container {
   height: 100% !important;
-  max-height: calc(100vh - 56px) !important;
+  max-height: 100vh !important;
   margin: 0 !important;
+}
+
+/* Masthead sits above the video when summoned via top-hover */
+ytd-masthead {
+  z-index: 2200 !important;
 }
 
 ytd-watch-flexy #movie_player,

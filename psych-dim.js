@@ -207,12 +207,10 @@
     if (document.getElementById('__psych-dim-hide-portal__')) return;
     const style = document.createElement('style');
     style.id = '__psych-dim-hide-portal__';
-    // Belt + suspenders: display, visibility, opacity, pointer-events all
-    // wedged shut. YouTube would need inline !important on all of them
-    // (which they don't use) to override.
-    const sels = PORTAL_ELEMENT_SELECTORS.map(s => `html[data-psych-dim-hover] ${s}`).join(',\n');
+    // Unconditionally hide every hover-preview portal element. Autoplay
+    // previews are killed on every card — dimmed or not.
     style.textContent = `
-      ${sels} {
+      ${PORTAL_ELEMENT_SELECTORS.join(',\n')} {
         display: none !important;
         visibility: hidden !important;
         opacity: 0 !important;
@@ -222,48 +220,8 @@
     (document.head || document.documentElement).appendChild(style);
   }
 
-  let dimRemoveTimer = null;
-
-  function setDimHover() {
-    if (dimRemoveTimer) { clearTimeout(dimRemoveTimer); dimRemoveTimer = null; }
-    document.documentElement.setAttribute('data-psych-dim-hover', '');
-  }
-
-  function clearDimHover() {
-    if (dimRemoveTimer) { clearTimeout(dimRemoveTimer); dimRemoveTimer = null; }
-    document.documentElement.removeAttribute('data-psych-dim-hover');
-  }
-
-  function scheduleClearDimHover(delay) {
-    if (dimRemoveTimer) clearTimeout(dimRemoveTimer);
-    dimRemoveTimer = setTimeout(clearDimHover, delay);
-  }
-
-  function wirePortalSync() {
-    document.addEventListener('mouseover', (e) => {
-      const card = e.target.closest?.(CARD_SELECTORS);
-      if (!card) return;
-      if (card.hasAttribute('data-dimmed')) {
-        setDimHover();
-      } else {
-        clearDimHover();
-      }
-    }, { passive: true, capture: true });
-
-    document.addEventListener('mouseout', (e) => {
-      const leaving = e.target.closest?.(CARD_SELECTORS);
-      const entering = e.relatedTarget?.closest?.(CARD_SELECTORS);
-      if (leaving && !entering) {
-        // Sticky preview may still be active — delay removal so it stays
-        // hidden until YouTube actually dismisses it.
-        scheduleClearDimHover(600);
-      }
-    }, { passive: true, capture: true });
-  }
-
   const start = () => {
     injectPortalStyle();
-    wirePortalSync();
     schedule();
     const mo = new MutationObserver(schedule);
     mo.observe(document.body, { childList: true, subtree: true });
