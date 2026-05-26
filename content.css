@@ -30,6 +30,11 @@ ytd-guide-entry-renderer:has(a[href="/shorts"]),
 ytd-mini-guide-entry-renderer:has(a[href="/shorts"]),
 
 /* ---------- Notifications linking to shorts ---------- */
-ytd-notification-renderer:has(a[href*="/shorts/"]) {
+ytd-notification-renderer:has(a[href*="/shorts/"]),
+
+/* ---------- Watch-page side suggestions ("Up next" column) ---------- */
+/* ytd-watch-flexy only exists on /watch URLs, so this is scoped to video pages */
+ytd-watch-flexy #secondary,
+ytd-watch-flexy ytd-watch-next-secondary-results-renderer {
   display: none !important;
 }
