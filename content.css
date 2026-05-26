@@ -35,6 +35,10 @@ ytd-notification-renderer:has(a[href*="/shorts/"]),
 /* ---------- Watch-page side suggestions ("Up next" column) ---------- */
 /* ytd-watch-flexy only exists on /watch URLs, so this is scoped to video pages */
 ytd-watch-flexy #secondary,
-ytd-watch-flexy ytd-watch-next-secondary-results-renderer {
+ytd-watch-flexy ytd-watch-next-secondary-results-renderer,
+
+/* ---------- Watch-page comments section ---------- */
+ytd-watch-flexy ytd-comments,
+ytd-watch-flexy #comments {
   display: none !important;
 }

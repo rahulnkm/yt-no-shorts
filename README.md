@@ -9,7 +9,7 @@ A tiny Chrome extension that removes every trace of Shorts from YouTube.
 - Hides the "Shorts" tab in the sidebar and mini-guide
 - Hides the "Shorts" filter chip in the search chip bar
 - Redirects any `youtube.com/shorts/<id>` URL to `youtube.com/watch?v=<id>`
-- Hides the "Up next" side suggestions on watch pages
+- Hides the "Up next" side suggestions and comments section on watch pages
 
 Targets both the legacy `ytd-*` renderers and the newer view-model components (`grid-shelf-view-model`, `shorts-lockup-view-model`). Tested on desktop YouTube in Chrome.
 
