@@ -42,3 +42,303 @@ ytd-watch-flexy ytd-comments,
 ytd-watch-flexy #comments {
   display: none !important;
 }
+
+/* ---------- 80% desaturation across all of YouTube ---------- */
+html {
+  filter: grayscale(0.8) !important;
+}
+
+/* ============================================================
+   Watch page: full-bleed player + custom monospace overlay
+   Works in BOTH default mode (player in #primary) and
+   theater mode (player in #full-bleed-container).
+   ============================================================ */
+
+ytd-watch-flexy #below { display: none !important; }
+
+/* --- Default mode: player lives in #primary --- */
+ytd-watch-flexy:not([theater]) #full-bleed-container { display: none !important; }
+ytd-watch-flexy:not([theater]) #primary {
+  width: 100% !important;
+  max-width: 100% !important;
+  height: calc(100vh - 56px) !important;
+  position: relative !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+ytd-watch-flexy:not([theater]) #primary-inner {
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* --- Theater mode: player lives in #full-bleed-container --- */
+ytd-watch-flexy[theater] #full-bleed-container {
+  display: block !important;
+  height: calc(100vh - 56px) !important;
+  max-height: calc(100vh - 56px) !important;
+  position: relative !important;
+}
+ytd-watch-flexy[theater] #columns,
+ytd-watch-flexy[theater] #single-column-container {
+  display: none !important;
+}
+
+/* --- Player chrome fills its container in both modes --- */
+ytd-watch-flexy #player,
+ytd-watch-flexy #player-container-outer,
+ytd-watch-flexy #player-container,
+ytd-watch-flexy #player-full-bleed-container {
+  height: 100% !important;
+  max-height: calc(100vh - 56px) !important;
+  margin: 0 !important;
+}
+
+ytd-watch-flexy #movie_player,
+ytd-watch-flexy .html5-video-player {
+  height: 100% !important;
+  width: 100% !important;
+}
+
+/* Suppress YouTube's native hover overlays AND the native controls bar
+   — our custom overlay handles all of those now. */
+ytd-watch-flexy .ytp-chrome-top,
+ytd-watch-flexy .ytp-chrome-bottom,
+ytd-watch-flexy .ytp-title,
+ytd-watch-flexy .ytp-title-link,
+ytd-watch-flexy .ytp-title-channel,
+ytd-watch-flexy .ytp-show-cards-title,
+ytd-watch-flexy .ytp-share-button,
+ytd-watch-flexy .ytp-watch-later-button,
+ytd-watch-flexy .ytp-impression-link,
+ytd-watch-flexy .ytp-gradient-top,
+ytd-watch-flexy .ytp-gradient-bottom,
+ytd-watch-flexy .ytp-cued-thumbnail-overlay {
+  display: none !important;
+}
+
+/* Hover zone — bottom third, invisible, no pointer-events so clicks pass through */
+.psych-watch-hover-zone {
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  height: 33% !important;
+  z-index: 50 !important;
+  pointer-events: none !important;
+}
+
+/* Custom monospace overlay — appears when mousemove hits bottom third */
+.psych-watch-overlay {
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: 1000 !important;
+  background: linear-gradient(to top, rgba(0,0,0,0.92), rgba(0,0,0,0.5) 60%, transparent) !important;
+  padding: 64px 32px 28px !important;
+  opacity: 0 !important;
+  transition: opacity 0.18s ease !important;
+  pointer-events: none !important;
+  color: #fff !important;
+  font-family: ui-monospace, "SF Mono", Menlo, Monaco, monospace !important;
+  letter-spacing: 0.01em !important;
+}
+
+.psych-watch-overlay.visible {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* Controls row */
+.psych-watch-controls {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  margin-bottom: 14px !important;
+}
+
+.psych-watch-controls .psych-btn {
+  background: transparent !important;
+  border: none !important;
+  color: #fff !important;
+  cursor: pointer !important;
+  padding: 4px 6px !important;
+  opacity: 0.78 !important;
+  transition: opacity 0.12s ease !important;
+  line-height: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.psych-watch-controls .psych-btn:hover { opacity: 1 !important; }
+
+.psych-watch-controls .psych-btn svg {
+  width: 16px !important;
+  height: 16px !important;
+  display: block !important;
+}
+
+.psych-watch-controls .psych-btn.active {
+  opacity: 1 !important;
+  position: relative !important;
+}
+.psych-watch-controls .psych-btn.active::after {
+  content: '' !important;
+  position: absolute !important;
+  bottom: -2px !important;
+  left: 20% !important;
+  right: 20% !important;
+  height: 1.5px !important;
+  background: #fff !important;
+}
+
+.psych-watch-controls .psych-time {
+  font-size: 11px !important;
+  opacity: 0.7 !important;
+  font-variant-numeric: tabular-nums !important;
+  letter-spacing: 0.02em !important;
+  white-space: nowrap !important;
+}
+
+.psych-watch-controls .psych-time-sep {
+  opacity: 0.5 !important;
+  margin: 0 4px !important;
+}
+
+/* Progress bar (wrap allows chapter markers to overlay) */
+.psych-watch-controls .psych-progress-wrap {
+  position: relative !important;
+  flex: 1 !important;
+  height: 14px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.psych-watch-controls .psych-progress {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background: transparent !important;
+  width: 100% !important;
+  height: 14px !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+.psych-watch-controls .psych-progress::-webkit-slider-runnable-track {
+  height: 2px;
+  background: rgba(255,255,255,0.25);
+}
+.psych-watch-controls .psych-progress::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  background: #fff;
+  border-radius: 50%;
+  margin-top: -4px;
+}
+.psych-watch-controls .psych-progress::-moz-range-track {
+  height: 2px;
+  background: rgba(255,255,255,0.25);
+}
+.psych-watch-controls .psych-progress::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  background: #fff;
+  border: none;
+  border-radius: 50%;
+}
+
+.psych-watch-controls .psych-chapter-marker {
+  position: absolute !important;
+  top: 50% !important;
+  width: 2px !important;
+  height: 8px !important;
+  background: rgba(255,255,255,0.85) !important;
+  transform: translate(-50%, -50%) !important;
+  pointer-events: none !important;
+  z-index: 2 !important;
+}
+
+.psych-watch-controls .psych-chapter-tooltip {
+  position: absolute !important;
+  bottom: 22px !important;
+  left: 0 !important;
+  transform: translateX(-50%) !important;
+  background: rgba(0, 0, 0, 0.95) !important;
+  color: #fff !important;
+  padding: 5px 10px !important;
+  font-size: 11px !important;
+  letter-spacing: 0.02em !important;
+  white-space: nowrap !important;
+  border-radius: 4px !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+  transition: opacity 0.1s ease !important;
+  z-index: 100 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.psych-watch-controls .psych-chapter-tooltip.visible {
+  opacity: 1 !important;
+}
+
+/* Volume group (button + slider side-by-side) */
+.psych-watch-controls .psych-volume-group {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.psych-watch-controls .psych-volume {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background: transparent !important;
+  width: 60px !important;
+  height: 14px !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+.psych-watch-controls .psych-volume::-webkit-slider-runnable-track {
+  height: 2px;
+  background: rgba(255,255,255,0.25);
+}
+.psych-watch-controls .psych-volume::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 8px;
+  height: 8px;
+  background: #fff;
+  border-radius: 50%;
+  margin-top: -3px;
+}
+.psych-watch-controls .psych-volume::-moz-range-track {
+  height: 2px;
+  background: rgba(255,255,255,0.25);
+}
+.psych-watch-controls .psych-volume::-moz-range-thumb {
+  width: 8px;
+  height: 8px;
+  background: #fff;
+  border: none;
+  border-radius: 50%;
+}
+
+.psych-watch-title {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  line-height: 1.45 !important;
+  margin-bottom: 4px !important;
+  max-width: 70ch !important;
+}
+
+.psych-watch-meta {
+  font-size: 11px !important;
+  opacity: 0.55 !important;
+  letter-spacing: 0.04em !important;
+}
