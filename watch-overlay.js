@@ -32,11 +32,32 @@
   }
   function extractMetadata() {
     const md = document.querySelector('ytd-watch-metadata');
+    let info = txt('#info-container, #info', md);
+    const m = info.match(/^(.*?\sago)\b/i);
+    if (m) info = m[1];
     return {
       title: txt('h1.ytd-watch-metadata, h1 yt-formatted-string', md) || document.title.replace(/ - YouTube$/, ''),
       channel: txt('ytd-channel-name #channel-name #text, ytd-channel-name a', md),
-      info: txt('#info-container, #info', md),
+      info,
     };
+  }
+
+  function getDescriptionHTML() {
+    // The description text with anchor tags lives inside the inline expander.
+    const selectors = [
+      '#description-inline-expander #attributed-snippet-text',
+      '#description-inline-expander yt-attributed-string',
+      'ytd-text-inline-expander#description-inline-expander',
+      '#description ytd-text-inline-expander',
+      '#description #description-inner',
+    ];
+    for (const sel of selectors) {
+      const el = document.querySelector(sel);
+      if (!el) continue;
+      const html = el.innerHTML?.trim();
+      if (html) return html;
+    }
+    return '';
   }
 
   function getPlayerSurface() {
@@ -252,7 +273,6 @@
       const ch = findChapterAtPercent(chapters, pct, video.duration);
       if (ch && ch.title) {
         tooltip.textContent = ch.title;
-        tooltip.style.left = `${pct}%`;
         tooltip.classList.add('visible');
       } else {
         tooltip.classList.remove('visible');
@@ -317,6 +337,155 @@
     });
   }
 
+  // ---------- Description panel (draggable, scrollable) ----------
+  let descPanel = null;
+
+  function ensureDescPanel() {
+    if (descPanel && document.body.contains(descPanel)) return descPanel;
+    descPanel = document.createElement('div');
+    descPanel.className = 'psych-desc-panel';
+    descPanel.innerHTML = `
+      <div class="psych-desc-header">
+        <span class="psych-desc-title">Description</span>
+        <button class="psych-desc-close" title="Close">×</button>
+      </div>
+      <div class="psych-desc-body"></div>
+    `;
+    document.body.appendChild(descPanel);
+
+    const header = descPanel.querySelector('.psych-desc-header');
+    const closeBtn = descPanel.querySelector('.psych-desc-close');
+
+    closeBtn.addEventListener('click', () => {
+      descPanel.classList.remove('visible');
+    });
+
+    // Drag
+    let dragging = false, startX = 0, startY = 0, panelX = 0, panelY = 0;
+    header.addEventListener('mousedown', (e) => {
+      if (e.target.closest('button')) return;
+      dragging = true;
+      startX = e.clientX; startY = e.clientY;
+      const r = descPanel.getBoundingClientRect();
+      panelX = r.left; panelY = r.top;
+      descPanel.classList.add('dragging');
+      e.preventDefault();
+    });
+    document.addEventListener('mousemove', (e) => {
+      if (!dragging) return;
+      const w = descPanel.offsetWidth, h = descPanel.offsetHeight;
+      let nx = panelX + (e.clientX - startX);
+      let ny = panelY + (e.clientY - startY);
+      nx = Math.max(0, Math.min(window.innerWidth - w, nx));
+      ny = Math.max(0, Math.min(window.innerHeight - h, ny));
+      descPanel.style.left = nx + 'px';
+      descPanel.style.top = ny + 'px';
+      descPanel.style.right = 'auto';
+    });
+    document.addEventListener('mouseup', () => {
+      if (dragging) {
+        dragging = false;
+        descPanel.classList.remove('dragging');
+      }
+    });
+
+    return descPanel;
+  }
+
+  function parseTimeFromHref(href) {
+    if (!href) return null;
+    const m = href.match(/[?&#]t=([^&]+)/);
+    if (!m) return null;
+    const t = m[1];
+    if (/^\d+s?$/.test(t)) return parseInt(t, 10);
+    if (/^(\d+h)?(\d+m)?(\d+s)?$/.test(t)) {
+      let total = 0;
+      const h = t.match(/(\d+)h/);
+      const mm = t.match(/(\d+)m(?!s)/);
+      const s = t.match(/(\d+)s/);
+      if (h) total += parseInt(h[1], 10) * 3600;
+      if (mm) total += parseInt(mm[1], 10) * 60;
+      if (s) total += parseInt(s[1], 10);
+      return total;
+    }
+    return null;
+  }
+
+  function seekVideo(seconds) {
+    const video = document.querySelector('video');
+    if (!video) return;
+    video.currentTime = seconds;
+    if (video.paused) video.play();
+  }
+
+  // Convert anchor-wrapped timestamps + plain-text timestamps in the
+  // description into clickable seek links.
+  function wireDescriptionLinks(body) {
+    // Pass 1: existing <a> tags. Any anchor with a t= param is a seek;
+    // everything else opens in a new tab.
+    body.querySelectorAll('a').forEach(a => {
+      const seconds = parseTimeFromHref(a.getAttribute('href'));
+      if (seconds !== null) {
+        a.classList.add('psych-timestamp');
+        a.removeAttribute('target');
+        a.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          seekVideo(seconds);
+        });
+      } else if (a.href) {
+        a.setAttribute('target', '_blank');
+        a.setAttribute('rel', 'noopener noreferrer');
+      }
+    });
+
+    // Pass 2: linkify plain-text timestamps that YouTube didn't auto-link.
+    const tsRe = /\b(\d{1,2}(?::\d{2}){1,2})\b/g;
+    const walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT);
+    const targets = [];
+    let node;
+    while ((node = walker.nextNode())) {
+      if (node.parentElement?.closest('a')) continue;
+      if (!/\d{1,2}:\d{2}/.test(node.textContent)) continue;
+      targets.push(node);
+    }
+    for (const tn of targets) {
+      const text = tn.textContent;
+      const frag = document.createDocumentFragment();
+      let lastIdx = 0;
+      tsRe.lastIndex = 0;
+      let m;
+      while ((m = tsRe.exec(text))) {
+        const parts = m[1].split(':').map(Number);
+        let seconds;
+        if (parts.length === 2) seconds = parts[0] * 60 + parts[1];
+        else seconds = parts[0] * 3600 + parts[1] * 60 + parts[2];
+        frag.appendChild(document.createTextNode(text.slice(lastIdx, m.index)));
+        const a = document.createElement('a');
+        a.href = '#';
+        a.textContent = m[1];
+        a.className = 'psych-timestamp';
+        a.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          seekVideo(seconds);
+        });
+        frag.appendChild(a);
+        lastIdx = m.index + m[0].length;
+      }
+      frag.appendChild(document.createTextNode(text.slice(lastIdx)));
+      tn.parentNode?.replaceChild(frag, tn);
+    }
+  }
+
+  function openDescription() {
+    const panel = ensureDescPanel();
+    const body = panel.querySelector('.psych-desc-body');
+    body.innerHTML = getDescriptionHTML() || '<em style="opacity:0.5">No description available.</em>';
+    wireDescriptionLinks(body);
+    panel.classList.add('visible');
+  }
+
   // ---------- Lifecycle ----------
   function update() {
     if (!isWatchPage()) return;
@@ -326,8 +495,25 @@
     wireControls(overlay);
     const data = extractMetadata();
     overlay.querySelector('.psych-watch-title').textContent = data.title;
-    overlay.querySelector('.psych-watch-meta').textContent =
-      [data.channel, data.info].filter(Boolean).join('  ·  ');
+
+    const meta = overlay.querySelector('.psych-watch-meta');
+    meta.textContent = '';
+    const parts = [data.channel, data.info].filter(Boolean);
+    parts.forEach((p, i) => {
+      if (i > 0) meta.append('  ·  ');
+      meta.append(p);
+    });
+    if (parts.length > 0) meta.append('  ·  ');
+    const descLink = document.createElement('a');
+    descLink.className = 'psych-desc-link';
+    descLink.textContent = 'Description';
+    descLink.href = '#';
+    descLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      openDescription();
+    });
+    meta.append(descLink);
   }
 
   function retry() {
