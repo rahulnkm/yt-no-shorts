@@ -321,8 +321,8 @@
       const inSurface = e.clientX >= r.left && e.clientX <= r.right &&
                         e.clientY >= r.top && e.clientY <= r.bottom;
       const relativeY = e.clientY - r.top;
-      const inBottomThird = inSurface && relativeY > r.height * (2 / 3);
-      overlay.classList.toggle('visible', inBottomThird);
+      const inBottomHalf = inSurface && relativeY > r.height * (1 / 2);
+      overlay.classList.toggle('visible', inBottomHalf);
     }, { capture: true, passive: true });
   }
 

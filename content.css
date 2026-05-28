@@ -48,6 +48,57 @@ html {
   filter: grayscale(0.8) !important;
 }
 
+/* ---------- Homepage cards: keep ONLY the title.
+   Hides channel avatar, channel name, view count, date.
+   Targets both legacy (ytd-*) and new view-model components.
+   The new YouTube uses camelCase classes, not kebab-case. ---------- */
+
+/* Legacy ytd-* components */
+ytd-rich-item-renderer #avatar-link,
+ytd-rich-item-renderer #avatar,
+ytd-rich-item-renderer ytd-channel-name,
+ytd-rich-item-renderer #channel-name,
+ytd-rich-item-renderer #metadata-line,
+ytd-rich-item-renderer ytd-video-meta-block,
+ytd-rich-item-renderer #byline-container,
+/* New view-model components (camelCase classes!) */
+yt-lockup-view-model .ytLockupMetadataViewModelMetadata,
+yt-lockup-view-model .ytLockupViewModelAvatar,
+yt-lockup-view-model yt-content-metadata-view-model,
+yt-lockup-view-model .ytContentMetadataViewModelHost,
+yt-lockup-view-model yt-decorated-avatar-view-model,
+yt-lockup-view-model .ytDecoratedAvatarViewModelHost,
+yt-lockup-view-model yt-avatar-shape {
+  display: none !important;
+}
+
+/* ---------- Force 4 video cards per row on the homepage grid ---------- */
+ytd-rich-grid-renderer,
+ytd-rich-grid-row {
+  --ytd-rich-grid-items-per-row: 4 !important;
+}
+
+/* Row spacing — YouTube's default is 32px; tightened to 24px. */
+ytd-rich-grid-renderer #contents > ytd-rich-item-renderer,
+ytd-rich-item-renderer {
+  margin-bottom: 24px !important;
+}
+
+/* ---------- Hide Premium promos and ad shelves in the feed ---------- */
+ytd-statement-banner-renderer,
+ytd-banner-promo-renderer,
+ytd-banner-promo-renderer-compact,
+ytd-feed-tab-promo-renderer,
+ytd-ad-slot-renderer,
+ytd-promoted-sparkles-web-renderer,
+ytd-mealbar-promo-renderer,
+ytd-rich-section-renderer:has(ytd-statement-banner-renderer),
+ytd-rich-section-renderer:has(ytd-feed-tab-promo-renderer),
+ytd-rich-section-renderer:has(ytd-banner-promo-renderer-compact),
+ytd-rich-section-renderer:has(ytd-banner-promo-renderer) {
+  display: none !important;
+}
+
 /* ============================================================
    Top bar (masthead) — hidden by default, slides in on top-hover.
    Also strips microphone, notifications, and Create button.
@@ -136,6 +187,14 @@ ytd-watch-flexy #movie_player,
 ytd-watch-flexy .html5-video-player {
   height: 100% !important;
   width: 100% !important;
+}
+
+/* Move YouTube's settings menu up so it sits ABOVE our custom controls bar
+   instead of anchoring to the hidden native settings button at the bottom. */
+ytd-watch-flexy .ytp-settings-menu,
+ytd-watch-flexy .ytp-popup.ytp-settings-menu {
+  bottom: 140px !important;
+  right: 24px !important;
 }
 
 /* Suppress YouTube's native hover overlays AND the native controls bar
@@ -467,21 +526,36 @@ ytd-watch-flexy .ytp-cued-thumbnail-overlay {
   white-space: pre-wrap !important;
 }
 
+/* Force white on EVERY descendant inside the panel — YouTube's cloned
+   attributed-string elements carry their own theme color variables. */
+.psych-desc-panel,
+.psych-desc-panel *,
+.psych-desc-body,
+.psych-desc-body * {
+  color: #fff !important;
+}
+
+/* Then override link colors (must come AFTER the catch-all above) */
 .psych-desc-body a,
-.psych-desc-body .yt-core-attributed-string__link {
+.psych-desc-body a *,
+.psych-desc-body .yt-core-attributed-string__link,
+.psych-desc-body .yt-core-attributed-string__link * {
   color: #6bb6ff !important;
   text-decoration: underline !important;
   cursor: pointer !important;
 }
-.psych-desc-body a:hover {
+.psych-desc-body a:hover,
+.psych-desc-body a:hover * {
   color: #9ccbff !important;
 }
 
-.psych-desc-body .psych-timestamp {
+.psych-desc-body .psych-timestamp,
+.psych-desc-body .psych-timestamp * {
   color: #ffd96b !important;
   font-variant-numeric: tabular-nums !important;
 }
-.psych-desc-body .psych-timestamp:hover {
+.psych-desc-body .psych-timestamp:hover,
+.psych-desc-body .psych-timestamp:hover * {
   color: #ffe999 !important;
 }
 
