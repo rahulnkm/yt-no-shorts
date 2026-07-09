@@ -1,3 +1,12 @@
+/* ============================================================
+   MASTER GATE — everything that touches YouTube's own DOM lives
+   inside this block, so html[data-psych-off] (set by gate.js when
+   the popup toggle is OFF) disables every effect at once. The
+   .psych-* component styles below the closing brace stay ungated
+   (their elements only exist when the JS is enabled).
+   ============================================================ */
+html:not([data-psych-off]) {
+
 /* ---------- Legacy ytd-* shelves ---------- */
 ytd-rich-shelf-renderer[is-shorts],
 ytd-reel-shelf-renderer,
@@ -44,7 +53,7 @@ ytd-watch-flexy #comments {
 }
 
 /* ---------- 80% desaturation across all of YouTube ---------- */
-html {
+& {
   filter: grayscale(0.8) !important;
 }
 
@@ -84,6 +93,19 @@ ytd-rich-item-renderer {
   margin-bottom: 24px !important;
 }
 
+/* ---------- Hide "Explore more topics" in-feed chip cloud ----------
+   Broad selector set + JS fallback in top-bar.js for text-based match. */
+ytd-rich-section-renderer:has(yt-chip-cloud-renderer),
+ytd-rich-section-renderer:has(ytd-related-chip-cloud-renderer),
+ytd-rich-shelf-renderer:has(yt-chip-cloud-renderer),
+ytd-shelf-renderer:has(yt-chip-cloud-renderer),
+ytd-item-section-renderer:has(yt-chip-cloud-renderer),
+ytd-related-chip-cloud-renderer,
+yt-related-chip-cloud-renderer,
+[data-psych-hide-section] {
+  display: none !important;
+}
+
 /* ---------- Hide Premium promos and ad shelves in the feed ---------- */
 ytd-statement-banner-renderer,
 ytd-banner-promo-renderer,
@@ -109,7 +131,7 @@ ytd-masthead {
   transition: transform 0.22s ease !important;
 }
 
-html.psych-top-visible ytd-masthead {
+&.psych-top-visible ytd-masthead {
   transform: translateY(0) !important;
 }
 
@@ -213,6 +235,8 @@ ytd-watch-flexy .ytp-gradient-bottom,
 ytd-watch-flexy .ytp-cued-thumbnail-overlay {
   display: none !important;
 }
+
+} /* ===== END MASTER GATE — .psych-* component styles below are ungated ===== */
 
 /* Hover zone — bottom third, invisible, no pointer-events so clicks pass through */
 .psych-watch-hover-zone {

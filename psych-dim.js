@@ -8,6 +8,8 @@
 // Nothing is hidden — the eye is drawn toward calmer cards.
 // ============================================================
 (() => {
+  if (window.__psychOff) return;  // master toggle (gate.js)
+
   // ---------- 1. Open-loop signals ----------
   const OPEN_LOOP_SIGNALS = [
     [26, /\b(you wo?n'?t believe|wait (?:for|til+|until)\b|what happened (?:next|when|after)|the result|i (?:can'?t|could ?n'?t) believe|until i (?:saw|tried|did|realized)|changed everything|and (?:then|that'?s when)|it all went wrong|gone wrong|you have to see)\b/i],

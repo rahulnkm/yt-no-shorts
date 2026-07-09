@@ -8,6 +8,8 @@
 // Icons are inline Lucide SVG (https://lucide.dev/).
 // ============================================================
 (() => {
+  if (window.__psychOff) return;  // master toggle (gate.js)
+
   const isWatchPage = () => location.pathname.startsWith('/watch');
 
   // ---------- Lucide SVG icons (inline) ----------
@@ -30,11 +32,61 @@
     const el = (root || document).querySelector(sel);
     return (el?.textContent || '').replace(/\s+/g, ' ').trim();
   }
+  function formatViewCount(n) {
+    if (n >= 1e9) return (n / 1e9).toFixed(n >= 1e10 ? 0 : 1).replace(/\.0$/, '') + 'B views';
+    if (n >= 1e6) return (n / 1e6).toFixed(n >= 1e7 ? 0 : 1).replace(/\.0$/, '') + 'M views';
+    if (n >= 1e3) return (n / 1e3).toFixed(n >= 1e4 ? 0 : 1).replace(/\.0$/, '') + 'K views';
+    return n + ' views';
+  }
+
+  function formatRelativeDate(isoDate) {
+    if (!isoDate) return '';
+    const then = new Date(isoDate);
+    if (isNaN(then)) return '';
+    const seconds = (Date.now() - then.getTime()) / 1000;
+    const units = [
+      ['year', 365 * 24 * 3600],
+      ['month', 30 * 24 * 3600],
+      ['week', 7 * 24 * 3600],
+      ['day', 24 * 3600],
+      ['hour', 3600],
+      ['minute', 60],
+    ];
+    for (const [name, sec] of units) {
+      const n = Math.floor(seconds / sec);
+      if (n >= 1) return `${n} ${name}${n > 1 ? 's' : ''} ago`;
+    }
+    return 'just now';
+  }
+
   function extractMetadata() {
     const md = document.querySelector('ytd-watch-metadata');
-    let info = txt('#info-container, #info', md);
-    const m = info.match(/^(.*?\sago)\b/i);
-    if (m) info = m[1];
+
+    // ---- Pull view count + date from ytInitialPlayerResponse (source of truth).
+    // yt-data-bridge.js runs in the page's MAIN world and writes the data onto
+    // <html data-yt-meta="…">. Content scripts run in an isolated world so we
+    // can only read globals via this DOM bridge.
+    let info = '';
+    try {
+      const raw = document.documentElement.getAttribute('data-yt-meta');
+      if (raw) {
+        const data = JSON.parse(raw);
+        const views = parseInt(data.viewCount, 10);
+        const parts = [];
+        if (!isNaN(views)) parts.push(formatViewCount(views));
+        if (data.publishDate) parts.push(formatRelativeDate(data.publishDate));
+        info = parts.join(' ');
+      }
+    } catch {}
+
+    // ---- Fallback to DOM scraping if the global isn't reachable.
+    if (!info) {
+      let legacy = txt('#info-container, #info', md);
+      legacy = legacy.replace(/\d{15,}/g, '').replace(/\s+/g, ' ').trim();
+      const m = legacy.match(/^(.*?\sago)\b/i);
+      info = m ? m[1] : legacy;
+    }
+
     return {
       title: txt('h1.ytd-watch-metadata, h1 yt-formatted-string', md) || document.title.replace(/ - YouTube$/, ''),
       channel: txt('ytd-channel-name #channel-name #text, ytd-channel-name a', md),
@@ -164,6 +216,7 @@
           <input type="range" class="psych-volume" min="0" max="100" step="1" value="100" title="Volume">
         </div>
         <button class="psych-btn psych-cc" title="Captions (c)">${iconSvg('captions')}</button>
+        <button class="psych-btn psych-speed" title="Playback speed">1×</button>
         <button class="psych-btn psych-settings" title="Settings">${iconSvg('settings')}</button>
         <button class="psych-btn psych-fullscreen" title="Fullscreen (f)">${iconSvg('maximize')}</button>
       </div>
@@ -187,8 +240,15 @@
     const muteBtn = $('.psych-mute');
     const volumeSlider = $('.psych-volume');
     const ccBtn = $('.psych-cc');
+    const speedBtn = $('.psych-speed');
     const settingsBtn = $('.psych-settings');
     const fsBtn = $('.psych-fullscreen');
+
+    const SPEEDS = [1, 1.5, 2, 4];
+    const syncSpeed = () => {
+      const rate = video.playbackRate;
+      speedBtn.textContent = `${rate}×`;
+    };
 
     const setIcon = (btn, name) => { btn.innerHTML = iconSvg(name); };
     const syncPlay = () => setIcon(playBtn, video.paused ? 'play' : 'pause');
@@ -219,6 +279,23 @@
       document.querySelector('.ytp-subtitles-button')?.click();
       ccBtn.classList.toggle('active');
     });
+    speedBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const cur = video.playbackRate;
+      // Click cycles through preset speeds (1 → 1.5 → 2 → 4 → 1)
+      const next = SPEEDS.find(s => s > cur) ?? SPEEDS[0];
+      video.playbackRate = next;
+    });
+    // Scroll-wheel over the button: adjust by deltaY magnitude, clamped 0.5–4×
+    speedBtn.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      // Sensitivity factor — bigger = more change per scroll
+      const SENSITIVITY = 0.01;
+      const raw = video.playbackRate - e.deltaY * SENSITIVITY;
+      const next = Math.round(raw * 10) / 10;
+      video.playbackRate = Math.max(0.5, Math.min(4, next));
+    }, { passive: false });
     settingsBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       document.querySelector('.ytp-settings-button')?.click();
@@ -242,6 +319,7 @@
     video.addEventListener('play', syncPlay);
     video.addEventListener('pause', syncPlay);
     video.addEventListener('volumechange', syncMute);
+    video.addEventListener('ratechange', syncSpeed);
     video.addEventListener('timeupdate', () => {
       curEl.textContent = fmtTime(video.currentTime);
       if (!seeking && video.duration) {
@@ -284,6 +362,7 @@
 
     syncPlay();
     syncMute();
+    syncSpeed();
     if (video.duration) durEl.textContent = fmtTime(video.duration);
 
     overlay.dataset.psychControlsWired = '1';
@@ -333,6 +412,19 @@
       setTimeout(() => {
         const btn = document.querySelector('.ytp-autonav-toggle-button[aria-checked="true"]');
         if (btn) btn.click();
+      }, t);
+    });
+  }
+
+  // ---------- Force theater mode on every /watch page ----------
+  function ensureTheaterMode() {
+    if (!isWatchPage()) return;
+    [500, 1500, 3000, 6000].forEach(t => {
+      setTimeout(() => {
+        const flexy = document.querySelector('ytd-watch-flexy');
+        if (!flexy || flexy.hasAttribute('theater')) return;
+        const sizeBtn = document.querySelector('.ytp-size-button');
+        if (sizeBtn) sizeBtn.click();
       }, t);
     });
   }
@@ -518,8 +610,10 @@
 
   function retry() {
     if (!isWatchPage()) return;
-    [0, 300, 800, 2000, 4000].forEach(t => setTimeout(update, t));
+    // Extended timing — some videos hydrate view-count / date after 4s
+    [0, 300, 800, 2000, 4000, 8000, 12000].forEach(t => setTimeout(update, t));
     ensureAutoplayOff();
+    ensureTheaterMode();
   }
 
   window.addEventListener('yt-navigate-finish', retry);

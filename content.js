@@ -20,7 +20,7 @@ function redirectShorts() {
   return false;
 }
 
-if (!redirectShorts()) {
+if (!window.__psychOff && !redirectShorts()) {
   // SPA nav hooks
   const _push = history.pushState;
   const _replace = history.replaceState;
